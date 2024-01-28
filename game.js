@@ -26,11 +26,11 @@ const toesToUiEvents = [
   "KeyD",
   "KeyF",
   "KeyG",
-  "KeyQ",
-  "KeyW",
-  "KeyE",
-  "KeyR",
   "KeyT",
+  "KeyR",
+  "KeyE",
+  "KeyW",
+  "KeyQ",
 ];
 
 /** @type {Record<string, number>} */
@@ -131,7 +131,10 @@ document.addEventListener(
           }
         }
         if (foot === "right" || foot === "both") {
-          if (direction === "left") {
+          // we implement the left-direction logic for the left foot,
+          // for the right direction on the right foot (and vice versa,
+          // because the right foot is mirrored)
+          if (direction === "right") {
             if (
               (lastRightToe === null && toe === 9) ||
               (lastRightToe !== null && toe >= 5 && toe === lastRightToe - 1)
@@ -143,7 +146,7 @@ document.addEventListener(
               leftOrRightOk = true;
             }
           }
-          if (direction === "right") {
+          if (direction === "left") {
             if (
               (lastRightToe === null && toe === 5) ||
               (lastRightToe !== null && toe >= 5 && toe === lastRightToe + 1)
