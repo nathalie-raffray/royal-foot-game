@@ -11,15 +11,7 @@ ggj 2024 "make me laugh"
 You can use the [serve](https://www.npmjs.com/package/serve) package:
 
 ```
-npx serve
+npx live-server
 ```
 
-### Python
-
-You can use the [http.serve](https://docs.python.org/3/library/http.server.html) command:
-
-```
-python -m http.server
-```
-
-Now open your web browser at the url indicated by your server (http://localhost:XXXX) to run your application.
+And open the game at http://localhost:8080
