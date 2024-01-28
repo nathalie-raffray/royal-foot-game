@@ -549,7 +549,12 @@ function Game() {
       {[...toePositions.values()].map(([x, y], i) => (
         <div
           key={i}
-          style={{ top: `${y}px`, left: `${x}px` }}
+          style={{
+            top: `${y}px`,
+            left: `${x}px`,
+            transform: "translate(-50%, -50%)",
+            willChange: "top, left",
+          }}
           hidden={!shouldRenderToeKey(i)}
         >
           {toesToUiEvents[i].replace("Key", "")}
