@@ -110,7 +110,7 @@ document.addEventListener(
               (lastLeftToe === null && toe === 4) ||
               (lastLeftToe !== null && toe < 5 && toe === lastLeftToe - 1)
             ) {
-              lastLeftToe = toe;
+              gameState.currentRequest.lastLeftToe = toe;
               if (lastLeftToe === 0) {
                 gameState.currentRequest.leftFootSucceeded = true;
               }
@@ -122,7 +122,7 @@ document.addEventListener(
               (lastLeftToe === null && toe === 0) ||
               (lastLeftToe !== null && toe < 5 && toe === lastLeftToe + 1)
             ) {
-              lastLeftToe = toe;
+              gameState.currentRequest.lastLeftToe = toe;
               if (lastLeftToe === 4) {
                 gameState.currentRequest.leftFootSucceeded = true;
               }
@@ -139,7 +139,7 @@ document.addEventListener(
               (lastRightToe === null && toe === 9) ||
               (lastRightToe !== null && toe >= 5 && toe === lastRightToe - 1)
             ) {
-              lastRightToe = toe;
+              gameState.currentRequest.lastRightToe = toe;
               if (lastRightToe === 5) {
                 gameState.currentRequest.rightFootSucceeded = true;
               }
@@ -151,7 +151,7 @@ document.addEventListener(
               (lastRightToe === null && toe === 5) ||
               (lastRightToe !== null && toe >= 5 && toe === lastRightToe + 1)
             ) {
-              lastRightToe = toe;
+              gameState.currentRequest.lastRightToe = toe;
               if (lastRightToe === 9) {
                 gameState.currentRequest.rightFootSucceeded = true;
               }
@@ -161,8 +161,8 @@ document.addEventListener(
         }
 
         if (!leftOrRightOk) {
-          lastLeftToe = null;
-          lastRightToe = null;
+          gameState.currentRequest.lastLeftToe = null;
+          gameState.currentRequest.lastRightToe = null;
         }
       }
     }
@@ -544,9 +544,18 @@ function Game() {
     }
   };
 
+  const toePositionsList = [...toePositions.values()];
+
+  const actionDescriptionIconPosition = toePositionsList.length
+    ? [
+        Math.round((toePositionsList[4][0] + toePositionsList[9][0]) / 2),
+        Math.round((toePositionsList[4][1] + toePositionsList[9][1]) / 2),
+      ]
+    : [0, 0];
+
   return (
     <>
-      {[...toePositions.values()].map(([x, y], i) => (
+      {toePositionsList.map(([x, y], i) => (
         <div
           key={i}
           style={{
@@ -554,12 +563,70 @@ function Game() {
             left: `${x}px`,
             transform: "translate(-50%, -50%)",
             willChange: "top, left",
+            position: "absolute",
           }}
           hidden={!shouldRenderToeKey(i)}
         >
-          {toesToUiEvents[i].replace("Key", "")}
+          <img src="img/key.svg" width={50} height={50} />
+          <span
+            style={{
+              position: "absolute",
+              top: "calc(50% + -1px)",
+              left: "calc(50% + 1px)",
+              transform: "translate(-50%, -50%)",
+              color: "white",
+              fontSize: "1.5rem",
+            }}
+          >
+            {toesToUiEvents[i].replace("Key", "")}
+          </span>
         </div>
       ))}
+      <img
+        style={{
+          top: `${actionDescriptionIconPosition[1]}px`,
+          left: `${actionDescriptionIconPosition[0]}px`,
+          transform: "translate(-50%, -50%)",
+          position: "absolute",
+        }}
+        src="img/mouse-horizontal.svg"
+        hidden={
+          !currentRequest ||
+          !(
+            currentRequest.type === "toe-request" &&
+            currentRequest.direction === "horizontal"
+          )
+        }
+      />
+      <img
+        style={{
+          top: `${actionDescriptionIconPosition[1]}px`,
+          left: `${actionDescriptionIconPosition[0]}px`,
+          transform: "translate(-50%, -50%)",
+          position: "absolute",
+        }}
+        src="img/mouse-vertical.svg"
+        hidden={
+          !currentRequest ||
+          !(
+            currentRequest.type === "toe-request" &&
+            currentRequest.direction === "vertical"
+          )
+        }
+      />
+      <img
+        style={{
+          width: 150,
+          top: `${actionDescriptionIconPosition[1]}px`,
+          left: `${actionDescriptionIconPosition[0]}px`,
+          transform: `translate(-50%, -50%) rotate(${
+            currentRequest?.direction === "left" ? 180 : 0
+          }deg`,
+          position: "absolute",
+        }}
+        src="img/arrow.svg"
+        hidden={!currentRequest || currentRequest.type !== "stroke-request"}
+      />
     </>
   );
 }
