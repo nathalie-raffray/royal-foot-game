@@ -357,7 +357,11 @@ function Game() {
         // re-compute positions of toes
         for (const toe of leftToes.concat(rightToes)) {
           const { position } = toe.getGlobalTransform();
-          const canvasPosition = getViewport().project(position);
+          const uiPromptPosition = [...position];
+          // we need to move the UI prompt a bit to be above the tip of the toe
+          uiPromptPosition[1] += 2; // y (vertical)
+          uiPromptPosition[2] += 3; // z (king is looking down z axis)
+          const canvasPosition = getViewport().project(uiPromptPosition);
           toePositions.set(toe, canvasPosition);
         }
 
