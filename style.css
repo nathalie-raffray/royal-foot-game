@@ -78,3 +78,7 @@ body {
 .hidden {
   display: none;
 }
+
+#overlay > * {
+  position: absolute;
+}
