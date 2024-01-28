@@ -351,6 +351,34 @@ function Game() {
 
       TimeoutOverlay.setup();
 
+      const starRotateUUID = "98c082d9-c649-4833-bbbb-ee85f22161a1";
+      const starRotateSettings = { playbackSpeed: 0.25 };
+      const [star1] = await SDK3DVerse.engineAPI.findEntitiesByEUID(
+        "05f37337-1c3e-46a0-9557-937af423651e"
+      );
+      const [star2] = await SDK3DVerse.engineAPI.findEntitiesByEUID(
+        "969aa21f-e853-4087-8c3c-183df83c12f8"
+      );
+      const [star3] = await SDK3DVerse.engineAPI.findEntitiesByEUID(
+        "6976f934-5000-4ff3-89b7-36851a70543e"
+      );
+
+      SDK3DVerse.engineAPI.playAnimationSequence(
+        starRotateUUID,
+        starRotateSettings,
+        star1
+      );
+      SDK3DVerse.engineAPI.playAnimationSequence(
+        starRotateUUID,
+        starRotateSettings,
+        star2
+      );
+      SDK3DVerse.engineAPI.playAnimationSequence(
+        starRotateUUID,
+        starRotateSettings,
+        star3
+      );
+
       issueToeRequest();
 
       function gameLoop() {
