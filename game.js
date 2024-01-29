@@ -250,7 +250,7 @@ const toePositions = new Map();
 const issueStrokeRequest = () => {
   gameState.currentRequest = {
     type: "stroke-request",
-    durationAllowed: 3000,
+    durationAllowed: 5000,
     timeRequested: performance.now(),
     direction: Math.random() < 0.5 ? "left" : "right",
     foot:
@@ -268,7 +268,6 @@ const issueStrokeRequest = () => {
 };
 
 const issueToeRequest = () => {
-  return issueStrokeRequest();
   const toeCount = Math.floor(Math.random() * gameState.level) + 1;
   const toes = Array(toeCount).fill(null);
   for (let i = 0; i < toes.length; i++) {
@@ -280,10 +279,10 @@ const issueToeRequest = () => {
   }
   gameState.currentRequest = {
     type: "toe-request",
-    durationAllowed: 3000,
+    durationAllowed: 5000,
     timeRequested: performance.now(),
     amountTickled: 0,
-    tickleAmountNeeded: 500 * gameState.level,
+    tickleAmountNeeded: 2000 + 1000 * gameState.level,
     direction: Math.random() < 0.5 ? "horizontal" : "vertical",
     toes: new Set(toes),
     succeeded: false,
@@ -421,7 +420,7 @@ function Game() {
                 gameState.areStrokeRequestsEnabled = true;
                 gameState.totalActionsSucceeded = 0;
                 gameState.totalActionsTaken = 0;
-                gameState.totalActionsForLevel = gameState.level * 10;
+                gameState.totalActionsForLevel = 10;
                 gameState.minSuccessForLevel =
                   gameState.totalActionsForLevel / 2;
                 console.log("Nice! Next level!");
@@ -582,16 +581,15 @@ function Game() {
             : 10)) /
         5
       : currentRequest.foot === "both" && currentRequest.direction === "left"
-      ? (((typeof currentRequest.lastLeftToe === "number"
-          ? currentRequest.lastLeftToe
-          : -1) +
-          1) /
+      ? ((5 -
+          (typeof currentRequest.lastLeftToe === "number"
+            ? currentRequest.lastLeftToe
+            : 5)) /
           5 +
-          (5 -
-            ((typeof currentRequest.lastRightToe === "number"
-              ? currentRequest.lastRightToe
-              : 4) +
-              1)) /
+          ((typeof currentRequest.lastRightToe === "number"
+            ? currentRequest.lastRightToe
+            : 4) -
+            4) /
             5) /
         2
       : currentRequest.foot === "both" && currentRequest.direction === "right"
@@ -601,10 +599,9 @@ function Game() {
           1) /
           5 +
           (10 -
-            ((typeof currentRequest.lastRightToe === "number"
+            (typeof currentRequest.lastRightToe === "number"
               ? currentRequest.lastRightToe
-              : 4) +
-              1)) /
+              : 10)) /
             5) /
         2
       : 0;
