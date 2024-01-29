@@ -83,7 +83,7 @@ body {
   display: none !important;
 }
 
-#overlay > * {
+#overlay>* {
   position: absolute;
 }
 
@@ -96,12 +96,15 @@ body {
   0% {
     transform: translateX(0);
   }
+
   33% {
     transform: translateX(100px);
   }
+
   66% {
     transform: translateX(-100px);
   }
+
   100% {
     transform: translateX(0);
   }
@@ -111,12 +114,15 @@ body {
   0% {
     transform: translateY(0);
   }
+
   33% {
     transform: translateY(-100px);
   }
+
   66% {
     transform: translateY(100px);
   }
+
   100% {
     transform: translateY(0);
   }
@@ -126,6 +132,7 @@ body {
   from {
     transform: translateX(0);
   }
+
   to {
     transform: translateX(100px);
   }
@@ -135,6 +142,7 @@ body {
   from {
     transform: rotate(180deg) translateX(0) !important;
   }
+
   to {
     transform: rotate(180deg) translateX(-100px) !important;
   }
@@ -144,9 +152,11 @@ body {
   0% {
     transform: translate(-50%, -50%) translateY(0);
   }
+
   50% {
     transform: translate(-50%, -50%) translateY(5px);
   }
+
   100% {
     transform: translate(-50%, -50%) translateY(0);
   }
@@ -157,27 +167,51 @@ body {
 /*------------------------------------------------*/
 
 #loading-screen {
-  position:absolute;
-  top:0;
-  left:0;
+  position: absolute;
+  top: 0;
+  left: 0;
   bottom: 0;
   right: 0;
   background: black;
 }
-#loading-screen > img {
-  position:absolute;
-  top:50%;
-  left:50%;
+
+#loading-screen>img {
+  position: absolute;
+  top: 50%;
+  left: 50%;
   transform: translate(-50%, -50%);
   width: 90vw;
 }
+
 .loading-text {
-  position:absolute;
-  top:20vh;
-  left:50%;
+  position: absolute;
+  top: 20vh;
+  left: 50%;
   transform: translateX(-50%);
   width: 80vw;
   color: white;
   text-align: center;
   font-size: 3rem;
+}
+
+
+/*------------------------------------------------*/
+/*---------        START BUTTON        ---------*/
+/*------------------------------------------------*/
+#start-game {
+  position: absolute;
+  top: 75%;
+  left: 75%;
+  transform: translate(-50%, -50%);
+  z-index: 50;
+}
+
+#start-game button {
+  background-color: red;
+  color: #444;
+  font-weight: bold;
+  font-size: 3rem;
+  padding: 1rem 2.5rem;
+  border-radius: 0.25rem;
+  cursor: pointer;
 }
