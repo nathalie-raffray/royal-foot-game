@@ -1,5 +1,5 @@
 // replace with url for music
-export const SFX = "sfx";
+export const GREGORIAN_LOOP = "audio/gregorian_chant_loop.mp3";
 export const TICKLE = "audio/tickle.mp3";
 export const SCRATCH_LOOP = "audio/scratch_loop.wav";
 export const TOE_0 = "audio/stroke-sfx/toe_0.wav";
@@ -30,7 +30,7 @@ export const MISC_LAUGH_2 = "audio/good/misc-laugh-2.wav";
 export const STUPENDOUS = "audio/good/stupendous.wav";
 const ARRAY_BUFFER_PROMISES = {};
 for (const src of [
-  SFX,
+  GREGORIAN_LOOP,
   TICKLE,
   SCRATCH_LOOP,
   TOE_0,
@@ -65,12 +65,6 @@ const MUSIC_BEATS_PER_MINUTE = 120;
 const MUSIC_BEATS_PER_SECOND = MUSIC_BEATS_PER_MINUTE / 60;
 const MUSIC_BEAT_LENGTH = 1 / MUSIC_BEATS_PER_SECOND;
 const MUSIC_MEASURE_LENGTH = MUSIC_BEAT_LENGTH * 4;
-const LOOP_POINTS = {
-  [SFX]: {
-    loopStart: 16,
-    loopEnd: 48,
-  },
-};
 class AudioManager {
   constructor() {
     this.audioCtx = new AudioContext();
@@ -181,8 +175,6 @@ class AudioManager {
     const bufferSourceNode = this.audioCtx.createBufferSource();
     bufferSourceNode.buffer = buffer;
     bufferSourceNode.loop = true;
-    bufferSourceNode.loopStart = LOOP_POINTS[src].loopStart;
-    bufferSourceNode.loopEnd = LOOP_POINTS[src].loopEnd;
     bufferSourceNode.connect(this.musicDestination);
     let timeToStartMusic;
     if (this.currentThemeBufferSourceNode) {
@@ -223,7 +215,7 @@ export function handlePauseMenuAudioState(paused) {
 // so it will have the needed permissions to set up the audio context.
 export async function startMusic() {
   audioManager = audioManager || new AudioManager();
-  await audioManager.queueTheme(SFX);
+  await audioManager.queueTheme(GREGORIAN_LOOP);
 }
 
 export function stopMusic() {
