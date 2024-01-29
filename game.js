@@ -1,4 +1,9 @@
-import { handlePauseMenuAudioState, startMusic, stopMusic, playSoundEffect } from "./audio.js";
+import {
+  handlePauseMenuAudioState,
+  startMusic,
+  stopMusic,
+  playSoundEffect,
+} from "./audio.js";
 import * as config from "./config.js";
 import * as TimeoutOverlay from "./TimeoutOverlay.js";
 
@@ -7,11 +12,15 @@ const { publicToken, mainSceneUUID, animationSequences } = config;
 /** @type {{ id: string; playbackSpeed: number; linker: object }[]} */
 let lastAnimationSequences = [];
 
-/** @param {typeof lastAnimationSequences} sequences */
-function playFootAnimationSequences(sequences) {
+function stopFootAnimationSequences() {
   for (const { id, linker } of lastAnimationSequences) {
     SDK3DVerse.engineAPI.stopAnimationSequence(id, linker);
   }
+}
+
+/** @param {typeof lastAnimationSequences} sequences */
+function playFootAnimationSequences(sequences) {
+  stopFootAnimationSequences();
   for (const { id, playbackSpeed, linker } of sequences) {
     SDK3DVerse.engineAPI.playAnimationSequence(id, { playbackSpeed }, linker);
   }
@@ -65,6 +74,7 @@ toesToUiEvents.forEach((uiEvent, i) => {
  *     tickleAmountNeeded: number;
  *     amountTickled: number;
  *     succeeded: boolean;
+ *     endOfActionHandled: boolean;
  *   } | {
  *     type: 'stroke-request';
  *     foot: 'left' | 'right' | 'both';
@@ -75,6 +85,7 @@ toesToUiEvents.forEach((uiEvent, i) => {
  *     lastRightToe: number | null;
  *     leftFootSucceeded: boolean;
  *     rightFootSucceeded: boolean;
+ *     endOfActionHandled: boolean;
  *   } | null;
  *   areStrokeRequestsEnabled: boolean;
  *   currentlyPressedKeys: Set<string>;
@@ -275,6 +286,7 @@ const issueStrokeRequest = () => {
     lastRightToe: null,
     leftFootSucceeded: false,
     rightFootSucceeded: false,
+    endOfActionHandled: false,
   };
   if (foot === "left" || foot === "right") {
     playFootAnimationSequences([
@@ -304,6 +316,15 @@ const issueStrokeRequest = () => {
   }
 };
 
+function playToesWaitingAnimation(toes) {
+  playFootAnimationSequences(
+    toes.map((toe) => ({
+      ...animationSequences.toeWobble,
+      linker: toe < 5 ? leftToes[toe] : rightToes[toe - 5],
+    }))
+  );
+}
+
 const issueToeRequest = () => {
   const toeCount = Math.floor(Math.random() * gameState.level) + 1;
   const toes = Array(toeCount).fill(null);
@@ -323,13 +344,9 @@ const issueToeRequest = () => {
     direction: Math.random() < 0.5 ? "horizontal" : "vertical",
     toes: new Set(toes),
     succeeded: false,
+    endOfActionHandled: false,
   };
-  playFootAnimationSequences(
-    toes.map((toe) => ({
-      ...animationSequences.toeWobble,
-      linker: toe < 5 ? leftFoot : rightFoot,
-    }))
-  );
+  playToesWaitingAnimation(toes);
 };
 
 let init = false;
@@ -339,8 +356,8 @@ const ANIMATION_STATES = {
   TiptoeOutOfVoid: 1,
   PlayTickleSoundEffect: 2,
   MoveToKing: 3,
-  LungeToFeet: 4
-}
+  LungeToFeet: 4,
+};
 
 let startStateChrono;
 let currentAnimationState = ANIMATION_STATES.NotStarted;
@@ -349,12 +366,16 @@ function crawlToKingAndReachToTickle(tickler) {
     currentAnimationState = ANIMATION_STATES.TiptoeOutOfVoid;
     startStateChrono = performance.now();
 
-    const tiptoeAnimationSequenceUUID = 'af11b239-44e1-426b-a219-080c56033a82';
+    const tiptoeAnimationSequenceUUID = "af11b239-44e1-426b-a219-080c56033a82";
     SDK3DVerse.engineAPI.playAnimationSequence(tiptoeAnimationSequenceUUID);
 
-    const animationController = tickler.getComponent('animation_controller');
-    animationController.dataJSON = { Start: true, Surprise: false, LungeToTickle: false };
-    tickler.setComponent('animation_controller', animationController);
+    const animationController = tickler.getComponent("animation_controller");
+    animationController.dataJSON = {
+      Start: true,
+      Surprise: false,
+      LungeToTickle: false,
+    };
+    tickler.setComponent("animation_controller", animationController);
     return;
   }
 
@@ -364,9 +385,13 @@ function crawlToKingAndReachToTickle(tickler) {
       currentAnimationState = ANIMATION_STATES.PlayTickleSoundEffect;
       startStateChrono = performance.now();
 
-      const animationController = tickler.getComponent('animation_controller');
-      animationController.dataJSON = { Start: false, Surprise: true, LungeToTickle: false };
-      tickler.setComponent('animation_controller', animationController);
+      const animationController = tickler.getComponent("animation_controller");
+      animationController.dataJSON = {
+        Start: false,
+        Surprise: true,
+        LungeToTickle: false,
+      };
+      tickler.setComponent("animation_controller", animationController);
     }
     return;
   }
@@ -375,7 +400,7 @@ function crawlToKingAndReachToTickle(tickler) {
     const elapsedTimeInS = (performance.now() - startStateChrono) / 1000;
     if (elapsedTimeInS >= 1.25) {
       currentAnimationState = ANIMATION_STATES.MoveToKing;
-      playSoundEffect('audio/tickle.mp3');
+      playSoundEffect("audio/tickle.mp3");
     }
     return;
   }
@@ -386,11 +411,18 @@ function crawlToKingAndReachToTickle(tickler) {
       currentAnimationState = ANIMATION_STATES.LungeToFeet;
       startStateChrono = performance.now();
       const ticklerLinker = tickler.getParent();
-      ticklerLinker.setGlobalTransform({ position: [13.44, 0, 41.4], eulerOrientation: [0, 90, 0] });
+      ticklerLinker.setGlobalTransform({
+        position: [13.44, 0, 41.4],
+        eulerOrientation: [0, 90, 0],
+      });
 
-      const animationController = tickler.getComponent('animation_controller');
-      animationController.dataJSON = { Start: false, Surprise: false, LungeToTickle: true };
-      tickler.setComponent('animation_controller', animationController);
+      const animationController = tickler.getComponent("animation_controller");
+      animationController.dataJSON = {
+        Start: false,
+        Surprise: false,
+        LungeToTickle: true,
+      };
+      tickler.setComponent("animation_controller", animationController);
 
       // probably useless, paranoia
       SDK3DVerse.engineAPI.propagateChanges();
@@ -416,8 +448,12 @@ function Game() {
   const [gameActiveState, setGameActiveState] = React.useState("active");
 
   const [currentRequest, setCurrentRequest] = React.useState(
-    /** @type {GameState['currentRequest']} */(null)
+    /** @type {GameState['currentRequest']} */ (null)
   );
+
+  const [postActionText, setPostActionText] = React.useState(null);
+  const [postLevelText, setPostLevelText] = React.useState(null);
+  const [failText, setFailText] = React.useState(null);
 
   React.useEffect(() => {
     SDK3DVerse.startSession({
@@ -493,7 +529,9 @@ function Game() {
 
       issueToeRequest();
 
-      const [tickler] = await SDK3DVerse.engineAPI.findEntitiesByEUID('9ef73925-8d42-4fed-a41a-c31ae1542012');
+      const [tickler] = await SDK3DVerse.engineAPI.findEntitiesByEUID(
+        "9ef73925-8d42-4fed-a41a-c31ae1542012"
+      );
 
       function gameLoop() {
         if (!init) {
@@ -513,6 +551,11 @@ function Game() {
           toePositions.set(toe, canvasPosition);
         }
 
+        if (gameState.currentRequest?.endOfActionHandled) {
+          requestAnimationFrame(gameLoop);
+          return;
+        }
+
         if (gameState.currentRequest) {
           // SUCCESS
           if (
@@ -527,7 +570,6 @@ function Game() {
                   gameState.currentRequest.leftFootSucceeded &&
                   gameState.currentRequest.rightFootSucceeded)))
           ) {
-            console.log("Action success!");
             if (gameState.currentRequest.type === "stroke-request") {
               const { foot, direction } = gameState.currentRequest;
               if (foot === "left" || foot === "right") {
@@ -561,7 +603,7 @@ function Game() {
               const { toes } = gameState.currentRequest;
               playFootAnimationSequences(
                 [...toes].flatMap((toe) => {
-                  const linker = toe < 5 ? leftFoot : rightFoot;
+                  const linker = toe < 5 ? leftToes[toe] : rightToes[toe - 5];
                   return [
                     {
                       ...animationSequences.joint2Bounce,
@@ -581,10 +623,10 @@ function Game() {
             }
             // TODO: show feedback and don't immediately cue for next request.
             // don't immediately remove request either.
-            gameState.currentRequest = null;
             gameState.totalActionsSucceeded++;
             gameState.totalActionsTaken++;
             gameState.currentlyPressedKeys = new Set();
+            gameState.currentRequest.endOfActionHandled = true;
             if (
               gameState.totalActionsTaken === gameState.totalActionsForLevel
             ) {
@@ -596,21 +638,28 @@ function Game() {
                 gameState.totalActionsForLevel = 10;
                 gameState.minSuccessForLevel =
                   gameState.totalActionsForLevel / 2;
-                console.log("Nice! Next level!");
+                setPostLevelText("Nice! New level!");
               } else {
-                console.log("End game!");
+                setPostLevelText("You really make me laugh!");
                 // TODO: implement end game
               }
+            } else {
+              setPostActionText("Hahaha!");
             }
+            setTimeout(() => {
+              setPostActionText(null);
+              setPostLevelText(null);
+              setFailText(null);
+              gameState.currentRequest = null;
+            }, 3000);
           } else if (
             performance.now() - gameState.currentRequest.timeRequested >
             gameState.currentRequest.durationAllowed
           ) {
             // FAIL
-            console.log("Action failed!");
 
             if (gameState.currentRequest.type === "stroke-request") {
-              const { foot, direction } = gameState.currentRequest;
+              const { foot } = gameState.currentRequest;
               if (foot === "left" || foot === "right") {
                 playFootAnimationSequences([
                   {
@@ -634,34 +683,28 @@ function Game() {
             if (gameState.currentRequest.type === "toe-request") {
               const { toes } = gameState.currentRequest;
               playFootAnimationSequences(
-                [...toes].flatMap((toe) => {
-                  const linker = toe < 5 ? leftFoot : rightFoot;
-                  return [
-                    {
-                      ...animationSequences.joint2Bounce,
-                      linker,
-                    },
-                    {
-                      ...animationSequences.toenailHover,
-                      linker,
-                    },
-                    {
-                      ...animationSequences.toenailRotate,
-                      linker,
-                    },
-                  ];
-                })
+                [...toes].map((toe) => ({
+                  ...animationSequences.joint2Wag,
+                  linker: toe < 5 ? leftToes[toe] : rightToes[toe - 5],
+                }))
               );
             }
-
-            gameState.currentRequest = null;
+            gameState.currentRequest.endOfActionHandled = true;
 
             if (
               gameState.totalActionsTaken - gameState.totalActionsSucceeded >
               gameState.totalActionsForLevel - gameState.minSuccessForLevel
             ) {
-              console.log("Gamer over!");
+              setFailText("To the gallows you go!");
               // TODO: implement game failed
+            } else {
+              setFailText("Not so funny!");
+              setTimeout(() => {
+                setPostActionText(null);
+                setPostLevelText(null);
+                setFailText(null);
+                gameState.currentRequest = null;
+              }, 3000);
             }
           }
         } else {
@@ -752,6 +795,7 @@ function Game() {
 
   const shouldRenderToeKey = (i) => {
     if (!currentRequest) return false;
+    if (currentRequest.endOfActionHandled) return false;
     /** @type {GameState['currentRequest']} */
     const request = currentRequest;
     if (request.type === "toe-request") {
@@ -768,63 +812,63 @@ function Game() {
 
   const actionDescriptionIconPosition = toePositionsList.length
     ? [
-      Math.round((toePositionsList[4][0] + toePositionsList[9][0]) / 2),
-      Math.round((toePositionsList[4][1] + toePositionsList[9][1]) / 2),
-    ]
+        Math.round((toePositionsList[4][0] + toePositionsList[9][0]) / 2),
+        Math.round((toePositionsList[4][1] + toePositionsList[9][1]) / 2),
+      ]
     : [0, 0];
 
   const strokeProgress =
     currentRequest?.type !== "stroke-request"
       ? 0
       : currentRequest.foot === "left" && currentRequest.direction === "left"
-        ? (5 -
+      ? (5 -
           (typeof currentRequest.lastLeftToe === "number"
             ? currentRequest.lastLeftToe
             : 5)) /
         5
-        : currentRequest.foot === "left" && currentRequest.direction === "right"
-          ? ((typeof currentRequest.lastLeftToe === "number"
+      : currentRequest.foot === "left" && currentRequest.direction === "right"
+      ? ((typeof currentRequest.lastLeftToe === "number"
+          ? currentRequest.lastLeftToe
+          : -1) +
+          1) /
+        5
+      : currentRequest.foot === "right" && currentRequest.direction === "left"
+      ? ((typeof currentRequest.lastRightToe === "number"
+          ? currentRequest.lastRightToe
+          : 4) -
+          4) /
+        5
+      : currentRequest.foot === "right" && currentRequest.direction === "right"
+      ? (10 -
+          (typeof currentRequest.lastRightToe === "number"
+            ? currentRequest.lastRightToe
+            : 10)) /
+        5
+      : currentRequest.foot === "both" && currentRequest.direction === "left"
+      ? ((5 -
+          (typeof currentRequest.lastLeftToe === "number"
             ? currentRequest.lastLeftToe
-            : -1) +
-            1) /
-          5
-          : currentRequest.foot === "right" && currentRequest.direction === "left"
-            ? ((typeof currentRequest.lastRightToe === "number"
+            : 5)) /
+          5 +
+          ((typeof currentRequest.lastRightToe === "number"
+            ? currentRequest.lastRightToe
+            : 4) -
+            4) /
+            5) /
+        2
+      : currentRequest.foot === "both" && currentRequest.direction === "right"
+      ? (((typeof currentRequest.lastLeftToe === "number"
+          ? currentRequest.lastLeftToe
+          : -1) +
+          1) /
+          5 +
+          (10 -
+            (typeof currentRequest.lastRightToe === "number"
               ? currentRequest.lastRightToe
-              : 4) -
-              4) /
-            5
-            : currentRequest.foot === "right" && currentRequest.direction === "right"
-              ? (10 -
-                (typeof currentRequest.lastRightToe === "number"
-                  ? currentRequest.lastRightToe
-                  : 10)) /
-              5
-              : currentRequest.foot === "both" && currentRequest.direction === "left"
-                ? ((5 -
-                  (typeof currentRequest.lastLeftToe === "number"
-                    ? currentRequest.lastLeftToe
-                    : 5)) /
-                  5 +
-                  ((typeof currentRequest.lastRightToe === "number"
-                    ? currentRequest.lastRightToe
-                    : 4) -
-                    4) /
-                  5) /
-                2
-                : currentRequest.foot === "both" && currentRequest.direction === "right"
-                  ? (((typeof currentRequest.lastLeftToe === "number"
-                    ? currentRequest.lastLeftToe
-                    : -1) +
-                    1) /
-                    5 +
-                    (10 -
-                      (typeof currentRequest.lastRightToe === "number"
-                        ? currentRequest.lastRightToe
-                        : 10)) /
-                    5) /
-                  2
-                  : 0;
+              : 10)) /
+            5) /
+        2
+      : 0;
 
   return (
     <>
@@ -909,8 +953,9 @@ function Game() {
             animationDuration: "0.3s",
             animationIterationCount: 1,
             animationTimingFunction: "ease",
-            transform: `rotate(${currentRequest?.direction === "left" ? 180 : 0
-              }deg`,
+            transform: `rotate(${
+              currentRequest?.direction === "left" ? 180 : 0
+            }deg`,
           }}
           src="img/arrow.svg"
           hidden={!currentRequest || currentRequest.type !== "stroke-request"}
@@ -933,15 +978,59 @@ function Game() {
             right: "7%",
             borderRadius: 4,
             background: `linear-gradient(#39F99D, #F9815C)`,
-            clipPath: `inset(${100 -
+            clipPath: `inset(${
+              100 -
               (currentRequest?.type === "toe-request"
                 ? (100 * currentRequest?.amountTickled) /
-                currentRequest?.tickleAmountNeeded
+                  currentRequest?.tickleAmountNeeded
                 : 100 * strokeProgress)
-              }% 0px 0px 0px)`,
+            }% 0px 0px 0px)`,
           }}
         />
         <img src="img/gauge.svg" style={{ position: "relative" }} width={50} />
+      </div>
+      <div
+        hidden={!failText}
+        style={{
+          position: "absolute",
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+        }}
+      >
+        <img src="img/reaction-bad.svg" />
+        <span
+          style={{
+            color: "white",
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+          }}
+        >
+          {failText}
+        </span>
+      </div>
+      <div
+        hidden={!postActionText && !postLevelText}
+        style={{
+          position: "absolute",
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+        }}
+      >
+        <img src="img/reaction-good.svg" />
+        <span
+          style={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+          }}
+        >
+          {postLevelText || postActionText}
+        </span>
       </div>
     </>
   );

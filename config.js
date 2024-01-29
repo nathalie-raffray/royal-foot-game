@@ -21,19 +21,19 @@ export const animationSequences = {
   },
   joint2Wag: {
     id: "6dee4023-a243-42d2-80ac-22502daa45a5",
-    playbackSpeed: 1.0,
+    playbackSpeed: 5.0,
   },
   joint2Bounce: {
     id: "464a5dfe-b020-49a7-83c3-90226f3d05a4",
-    playbackSpeed: 1.0,
+    playbackSpeed: 1.5,
   },
   toenailHover: {
     id: "a8a193cc-7bf6-4e62-ba7a-b51db6624272",
-    playbackSpeed: 1.0,
+    playbackSpeed: 0.3,
   },
   toenailRotate: {
     id: "66d97d33-8935-473a-b3ea-f582ae671c4d",
-    playbackSpeed: 1.0,
+    playbackSpeed: 2,
   },
   footWobbleRight: {
     id: "d7366df8-5c90-4374-b42f-6133de3956e6",
@@ -53,7 +53,7 @@ export const animationSequences = {
   },
   footStomp: {
     id: "486d355c-c3f2-4f29-a713-f36f27c956b4",
-    playbackSpeed: 1.0,
+    playbackSpeed: 0.5,
   },
   toeWaveRight: {
     id: "a734f62a-e134-4aa7-9d61-315ebdefb66b",
