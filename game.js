@@ -349,6 +349,7 @@ const issueToeRequest = () => {
   playToesWaitingAnimation(toes);
 };
 
+let gameStarted = false;
 let init = false;
 
 const ANIMATION_STATES = {
