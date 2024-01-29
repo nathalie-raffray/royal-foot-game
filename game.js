@@ -2,7 +2,21 @@ import { handlePauseMenuAudioState, startMusic, stopMusic, playSoundEffect } fro
 import * as config from "./config.js";
 import * as TimeoutOverlay from "./TimeoutOverlay.js";
 
-const { publicToken, mainSceneUUID } = config;
+const { publicToken, mainSceneUUID, animationSequences } = config;
+
+/** @type {{ id: string; playbackSpeed: number; linker: object }[]} */
+let lastAnimationSequences = [];
+
+/** @param {typeof lastAnimationSequences} sequences */
+function playFootAnimationSequences(sequences) {
+  for (const { id, linker } of lastAnimationSequences) {
+    SDK3DVerse.engineAPI.stopAnimationSequence(id, linker);
+  }
+  for (const { id, playbackSpeed, linker } of sequences) {
+    SDK3DVerse.engineAPI.playAnimationSequence(id, { playbackSpeed }, linker);
+  }
+  lastAnimationSequences = sequences;
+}
 
 const getViewport = () => {
   const viewport = SDK3DVerse.engineAPI.cameraAPI.getActiveViewports()[0];
@@ -248,23 +262,46 @@ const rightToes = [];
 const toePositions = new Map();
 
 const issueStrokeRequest = () => {
+  const foot =
+    gameState.level === 4 ? "both" : Math.random() < 0.5 ? "left" : "right";
+  const direction = Math.random() < 0.5 ? "left" : "right";
   gameState.currentRequest = {
     type: "stroke-request",
     durationAllowed: 5000,
     timeRequested: performance.now(),
-    direction: Math.random() < 0.5 ? "left" : "right",
-    foot:
-      gameState.level === 4 ? "both" : Math.random() < 0.5 ? "left" : "right",
+    direction,
+    foot,
     lastLeftToe: null,
     lastRightToe: null,
     leftFootSucceeded: false,
     rightFootSucceeded: false,
   };
-  console.log(
-    "stroke-request",
-    gameState.currentRequest.direction,
-    gameState.currentRequest.foot
-  );
+  if (foot === "left" || foot === "right") {
+    playFootAnimationSequences([
+      {
+        ...((foot === "left" && direction === "right") ||
+        (foot === "right" && direction === "left")
+          ? animationSequences.footWobbleRight
+          : animationSequences.footWobbleLeft),
+        linker: foot === "left" ? leftFoot : rightFoot,
+      },
+    ]);
+  } else {
+    playFootAnimationSequences([
+      {
+        ...(direction === "right"
+          ? animationSequences.footWobbleRight
+          : animationSequences.footWobbleLeft),
+        linker: leftFoot,
+      },
+      {
+        ...(direction === "left"
+          ? animationSequences.footWobbleRight
+          : animationSequences.footWobbleLeft),
+        linker: rightFoot,
+      },
+    ]);
+  }
 };
 
 const issueToeRequest = () => {
@@ -287,10 +324,11 @@ const issueToeRequest = () => {
     toes: new Set(toes),
     succeeded: false,
   };
-  console.log(
-    "toe-request",
-    [...gameState.currentRequest.toes],
-    gameState.currentRequest.direction
+  playFootAnimationSequences(
+    toes.map((toe) => ({
+      ...animationSequences.toeWobble,
+      linker: toe < 5 ? leftFoot : rightFoot,
+    }))
   );
 };
 
@@ -489,11 +527,64 @@ function Game() {
                   gameState.currentRequest.leftFootSucceeded &&
                   gameState.currentRequest.rightFootSucceeded)))
           ) {
+            console.log("Action success!");
+            if (gameState.currentRequest.type === "stroke-request") {
+              const { foot, direction } = gameState.currentRequest;
+              if (foot === "left" || foot === "right") {
+                playFootAnimationSequences([
+                  {
+                    ...((foot === "left" && direction === "right") ||
+                    (foot === "right" && direction === "left")
+                      ? animationSequences.toeWaveRight
+                      : animationSequences.toeWaveLeft),
+                    linker: foot === "left" ? leftFoot : rightFoot,
+                  },
+                ]);
+              } else {
+                playFootAnimationSequences([
+                  {
+                    ...(direction === "right"
+                      ? animationSequences.toeWaveRight
+                      : animationSequences.toeWaveLeft),
+                    linker: leftFoot,
+                  },
+                  {
+                    ...(direction === "left"
+                      ? animationSequences.toeWaveRight
+                      : animationSequences.toeWaveLeft),
+                    linker: rightFoot,
+                  },
+                ]);
+              }
+            }
+            if (gameState.currentRequest.type === "toe-request") {
+              const { toes } = gameState.currentRequest;
+              playFootAnimationSequences(
+                [...toes].flatMap((toe) => {
+                  const linker = toe < 5 ? leftFoot : rightFoot;
+                  return [
+                    {
+                      ...animationSequences.joint2Bounce,
+                      linker,
+                    },
+                    {
+                      ...animationSequences.toenailHover,
+                      linker,
+                    },
+                    {
+                      ...animationSequences.toenailRotate,
+                      linker,
+                    },
+                  ];
+                })
+              );
+            }
+            // TODO: show feedback and don't immediately cue for next request.
+            // don't immediately remove request either.
             gameState.currentRequest = null;
             gameState.totalActionsSucceeded++;
             gameState.totalActionsTaken++;
             gameState.currentlyPressedKeys = new Set();
-            console.log("Action success!");
             if (
               gameState.totalActionsTaken === gameState.totalActionsForLevel
             ) {
@@ -516,8 +607,55 @@ function Game() {
             gameState.currentRequest.durationAllowed
           ) {
             // FAIL
-            gameState.currentRequest = null;
             console.log("Action failed!");
+
+            if (gameState.currentRequest.type === "stroke-request") {
+              const { foot, direction } = gameState.currentRequest;
+              if (foot === "left" || foot === "right") {
+                playFootAnimationSequences([
+                  {
+                    ...animationSequences.footStomp,
+                    linker: foot === "left" ? leftFoot : rightFoot,
+                  },
+                ]);
+              } else {
+                playFootAnimationSequences([
+                  {
+                    ...animationSequences.footStomp,
+                    linker: leftFoot,
+                  },
+                  {
+                    ...animationSequences.footStomp,
+                    linker: rightFoot,
+                  },
+                ]);
+              }
+            }
+            if (gameState.currentRequest.type === "toe-request") {
+              const { toes } = gameState.currentRequest;
+              playFootAnimationSequences(
+                [...toes].flatMap((toe) => {
+                  const linker = toe < 5 ? leftFoot : rightFoot;
+                  return [
+                    {
+                      ...animationSequences.joint2Bounce,
+                      linker,
+                    },
+                    {
+                      ...animationSequences.toenailHover,
+                      linker,
+                    },
+                    {
+                      ...animationSequences.toenailRotate,
+                      linker,
+                    },
+                  ];
+                })
+              );
+            }
+
+            gameState.currentRequest = null;
+
             if (
               gameState.totalActionsTaken - gameState.totalActionsSucceeded >
               gameState.totalActionsForLevel - gameState.minSuccessForLevel
