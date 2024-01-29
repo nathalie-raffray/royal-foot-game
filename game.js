@@ -3,11 +3,49 @@ import {
   startMusic,
   stopMusic,
   playSoundEffect,
+  CLEARING_THROAT_1,
+  CLEARING_THROAT_2,
+  EUHM,
+  FANTASTIC,
+  GRR,
+  HA,
+  HA_BUT_NOT,
+  IVE_HAD_MEN_BEHEADED,
+  MARVELOUS,
+  MISC_LAUGH,
+  MISC_LAUGH_2,
+  NO_ONES_LAUGHIN,
+  OW,
+  STUPENDOUS,
+  THATS_NOT_FUNNY_BOY,
 } from "./audio.js";
 import * as config from "./config.js";
 import * as TimeoutOverlay from "./TimeoutOverlay.js";
 
 const { publicToken, mainSceneUUID, animationSequences } = config;
+
+const goodAudio = [
+  FANTASTIC,
+  HA,
+  MARVELOUS,
+  MISC_LAUGH,
+  MISC_LAUGH_2,
+  STUPENDOUS,
+];
+
+const badAudio = [
+  CLEARING_THROAT_1,
+  CLEARING_THROAT_2,
+  EUHM,
+  GRR,
+  HA_BUT_NOT,
+  IVE_HAD_MEN_BEHEADED,
+  NO_ONES_LAUGHIN,
+  OW,
+  THATS_NOT_FUNNY_BOY,
+];
+
+let currentScratchBufferCallback = null;
 
 /** @type {{ id: string; playbackSpeed: number; linker: object }[]} */
 let lastAnimationSequences = [];
@@ -154,6 +192,11 @@ document.addEventListener(
               leftOrRightOk = true;
             }
           }
+          if (gameState.currentRequest.lastLeftToe !== lastLeftToe) {
+            playSoundEffect(
+              `audio/stroke-sfx/toe_${gameState.currentRequest.lastLeftToe}.wav`
+            );
+          }
         }
         if (foot === "right" || foot === "both") {
           // we implement the left-direction logic for the left foot,
@@ -182,6 +225,11 @@ document.addEventListener(
               }
               leftOrRightOk = true;
             }
+          }
+          if (gameState.currentRequest.lastRightToe !== lastRightToe) {
+            playSoundEffect(
+              `audio/stroke-sfx/toe_${gameState.currentRequest.lastRightToe}.wav`
+            );
           }
         }
 
@@ -215,6 +263,10 @@ document.addEventListener(
   "mouseup",
   () => {
     mouseClicked = false;
+    if (currentScratchBufferCallback) {
+      currentScratchBufferCallback();
+      currentScratchBufferCallback = null;
+    }
   },
   false
 );
@@ -259,6 +311,14 @@ document.addEventListener(
         gameState.currentRequest.tickleAmountNeeded
       ) {
         gameState.currentRequest.succeeded = true;
+        if (currentScratchBufferCallback) {
+          currentScratchBufferCallback();
+          currentScratchBufferCallback = null;
+        }
+      } else if (!currentScratchBufferCallback) {
+        playSoundEffect("audio/scratch_loop.wav", true).then((cb) => {
+          currentScratchBufferCallback = cb;
+        });
       }
     }
   },
@@ -746,12 +806,21 @@ function Game() {
                 gameState.minSuccessForLevel =
                   gameState.totalActionsForLevel / 2;
                 setPostLevelText("Nice! New level!");
+                playSoundEffect(
+                  goodAudio[Math.floor(Math.random() * goodAudio.length)]
+                );
               } else {
                 setPostLevelText("You really make me laugh!");
+                playSoundEffect(
+                  goodAudio[Math.floor(Math.random() * goodAudio.length)]
+                );
                 // TODO: implement end game
               }
             } else {
               setPostActionText("Hahaha!");
+              playSoundEffect(
+                goodAudio[Math.floor(Math.random() * goodAudio.length)]
+              );
             }
             setTimeout(() => {
               setPostActionText(null);
@@ -803,9 +872,15 @@ function Game() {
               gameState.totalActionsForLevel - gameState.minSuccessForLevel
             ) {
               setFailText("To the gallows you go!");
+              playSoundEffect(
+                badAudio[Math.floor(Math.random() * badAudio.length)]
+              );
               // TODO: implement game failed
             } else {
               setFailText("Not so funny!");
+              playSoundEffect(
+                badAudio[Math.floor(Math.random() * badAudio.length)]
+              );
               setTimeout(() => {
                 setPostActionText(null);
                 setPostLevelText(null);
