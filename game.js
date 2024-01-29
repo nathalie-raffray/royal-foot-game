@@ -991,6 +991,7 @@ function Game() {
       </div>
       <div
         hidden={!failText}
+        className="hey-text"
         style={{
           position: "absolute",
           top: "50%",
@@ -1013,6 +1014,7 @@ function Game() {
       </div>
       <div
         hidden={!postActionText && !postLevelText}
+        className="hey-text"
         style={{
           position: "absolute",
           top: "50%",

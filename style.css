@@ -87,14 +87,9 @@ body {
   position: absolute;
 }
 
-.box {
-  animation-duration: 0.7s;
-  animation-iteration-count: 1;
-}
-
-.bounce-1 {
-  animation-name: bounce-1;
-  animation-timing-function: ease;
+.hey-text {
+  white-space: nowrap;
+  font-size: 1.2rem;
 }
 
 @keyframes bounce-horizontal {
