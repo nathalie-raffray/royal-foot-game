@@ -438,6 +438,12 @@ function crawlToKingAndReachToTickle(tickler) {
   }
 }
 
+//------------------------------------------------------------------------------
+async function HideLoadingScreen() {
+  document.getElementById("loading-screen").classList.add('hidden');
+}
+
+//------------------------------------------------------------------------------
 function Game() {
   /**
    * @typedef {'waiting-to-start' | 'active' | 'paused'} GameActiveState
@@ -466,6 +472,8 @@ function Game() {
       },
     }).then(async () => {
       SDK3DVerse.disableInputs();
+
+      HideLoadingScreen();
 
       leftFoot = (
         await SDK3DVerse.engineAPI.findEntitiesByEUID(config.leftFootEntityUUID)
