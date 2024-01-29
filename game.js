@@ -1,4 +1,4 @@
-import { handlePauseMenuAudioState, startMusic, stopMusic } from "./audio.js";
+import { handlePauseMenuAudioState, startMusic, stopMusic, playSoundEffect } from "./audio.js";
 import * as config from "./config.js";
 import * as TimeoutOverlay from "./TimeoutOverlay.js";
 
@@ -294,6 +294,80 @@ const issueToeRequest = () => {
   );
 };
 
+let init = false;
+
+const ANIMATION_STATES = {
+  NotStarted: 0,
+  TiptoeOutOfVoid: 1,
+  PlayTickleSoundEffect: 2,
+  MoveToKing: 3,
+  LungeToFeet: 4
+}
+
+let startStateChrono;
+let currentAnimationState = ANIMATION_STATES.NotStarted;
+function crawlToKingAndReachToTickle(tickler) {
+  if (currentAnimationState === ANIMATION_STATES.NotStarted) {
+    currentAnimationState = ANIMATION_STATES.TiptoeOutOfVoid;
+    startStateChrono = performance.now();
+
+    const tiptoeAnimationSequenceUUID = 'af11b239-44e1-426b-a219-080c56033a82';
+    SDK3DVerse.engineAPI.playAnimationSequence(tiptoeAnimationSequenceUUID);
+
+    const animationController = tickler.getComponent('animation_controller');
+    animationController.dataJSON = { Start: true, Surprise: false, LungeToTickle: false };
+    tickler.setComponent('animation_controller', animationController);
+    return;
+  }
+
+  if (currentAnimationState === ANIMATION_STATES.TiptoeOutOfVoid) {
+    const elapsedTimeInS = (performance.now() - startStateChrono) / 1000;
+    if (elapsedTimeInS >= 4.5) {
+      currentAnimationState = ANIMATION_STATES.PlayTickleSoundEffect;
+      startStateChrono = performance.now();
+
+      const animationController = tickler.getComponent('animation_controller');
+      animationController.dataJSON = { Start: false, Surprise: true, LungeToTickle: false };
+      tickler.setComponent('animation_controller', animationController);
+    }
+    return;
+  }
+
+  if (currentAnimationState === ANIMATION_STATES.PlayTickleSoundEffect) {
+    const elapsedTimeInS = (performance.now() - startStateChrono) / 1000;
+    if (elapsedTimeInS >= 1.25) {
+      currentAnimationState = ANIMATION_STATES.MoveToKing;
+      playSoundEffect('audio/tickle.mp3');
+    }
+    return;
+  }
+
+  if (currentAnimationState === ANIMATION_STATES.MoveToKing) {
+    const elapsedTimeInS = (performance.now() - startStateChrono) / 1000;
+    if (elapsedTimeInS >= 4) {
+      currentAnimationState = ANIMATION_STATES.LungeToFeet;
+      startStateChrono = performance.now();
+      const ticklerLinker = tickler.getParent();
+      ticklerLinker.setGlobalTransform({ position: [13.44, 0, 41.4], eulerOrientation: [0, 90, 0] });
+
+      const animationController = tickler.getComponent('animation_controller');
+      animationController.dataJSON = { Start: false, Surprise: false, LungeToTickle: true };
+      tickler.setComponent('animation_controller', animationController);
+
+      // probably useless, paranoia
+      SDK3DVerse.engineAPI.propagateChanges();
+    }
+    return;
+  }
+
+  if (currentAnimationState === ANIMATION_STATES.LungeToFeet) {
+    const elapsedTimeInS = (performance.now() - startStateChrono) / 1000;
+    if (elapsedTimeInS >= 1) {
+      init = true;
+    }
+  }
+}
+
 function Game() {
   /**
    * @typedef {'waiting-to-start' | 'active' | 'paused'} GameActiveState
@@ -304,7 +378,7 @@ function Game() {
   const [gameActiveState, setGameActiveState] = React.useState("active");
 
   const [currentRequest, setCurrentRequest] = React.useState(
-    /** @type {GameState['currentRequest']} */ (null)
+    /** @type {GameState['currentRequest']} */(null)
   );
 
   React.useEffect(() => {
@@ -381,7 +455,15 @@ function Game() {
 
       issueToeRequest();
 
+      const [tickler] = await SDK3DVerse.engineAPI.findEntitiesByEUID('9ef73925-8d42-4fed-a41a-c31ae1542012');
+
       function gameLoop() {
+        if (!init) {
+          crawlToKingAndReachToTickle(tickler);
+          requestAnimationFrame(gameLoop);
+          return;
+        }
+
         // re-compute positions of toes
         for (const toe of leftToes.concat(rightToes)) {
           const { position } = toe.getGlobalTransform();
@@ -548,63 +630,63 @@ function Game() {
 
   const actionDescriptionIconPosition = toePositionsList.length
     ? [
-        Math.round((toePositionsList[4][0] + toePositionsList[9][0]) / 2),
-        Math.round((toePositionsList[4][1] + toePositionsList[9][1]) / 2),
-      ]
+      Math.round((toePositionsList[4][0] + toePositionsList[9][0]) / 2),
+      Math.round((toePositionsList[4][1] + toePositionsList[9][1]) / 2),
+    ]
     : [0, 0];
 
   const strokeProgress =
     currentRequest?.type !== "stroke-request"
       ? 0
       : currentRequest.foot === "left" && currentRequest.direction === "left"
-      ? (5 -
+        ? (5 -
           (typeof currentRequest.lastLeftToe === "number"
             ? currentRequest.lastLeftToe
             : 5)) /
         5
-      : currentRequest.foot === "left" && currentRequest.direction === "right"
-      ? ((typeof currentRequest.lastLeftToe === "number"
-          ? currentRequest.lastLeftToe
-          : -1) +
-          1) /
-        5
-      : currentRequest.foot === "right" && currentRequest.direction === "left"
-      ? ((typeof currentRequest.lastRightToe === "number"
-          ? currentRequest.lastRightToe
-          : 4) -
-          4) /
-        5
-      : currentRequest.foot === "right" && currentRequest.direction === "right"
-      ? (10 -
-          (typeof currentRequest.lastRightToe === "number"
-            ? currentRequest.lastRightToe
-            : 10)) /
-        5
-      : currentRequest.foot === "both" && currentRequest.direction === "left"
-      ? ((5 -
-          (typeof currentRequest.lastLeftToe === "number"
+        : currentRequest.foot === "left" && currentRequest.direction === "right"
+          ? ((typeof currentRequest.lastLeftToe === "number"
             ? currentRequest.lastLeftToe
-            : 5)) /
-          5 +
-          ((typeof currentRequest.lastRightToe === "number"
-            ? currentRequest.lastRightToe
-            : 4) -
-            4) /
-            5) /
-        2
-      : currentRequest.foot === "both" && currentRequest.direction === "right"
-      ? (((typeof currentRequest.lastLeftToe === "number"
-          ? currentRequest.lastLeftToe
-          : -1) +
-          1) /
-          5 +
-          (10 -
-            (typeof currentRequest.lastRightToe === "number"
+            : -1) +
+            1) /
+          5
+          : currentRequest.foot === "right" && currentRequest.direction === "left"
+            ? ((typeof currentRequest.lastRightToe === "number"
               ? currentRequest.lastRightToe
-              : 10)) /
-            5) /
-        2
-      : 0;
+              : 4) -
+              4) /
+            5
+            : currentRequest.foot === "right" && currentRequest.direction === "right"
+              ? (10 -
+                (typeof currentRequest.lastRightToe === "number"
+                  ? currentRequest.lastRightToe
+                  : 10)) /
+              5
+              : currentRequest.foot === "both" && currentRequest.direction === "left"
+                ? ((5 -
+                  (typeof currentRequest.lastLeftToe === "number"
+                    ? currentRequest.lastLeftToe
+                    : 5)) /
+                  5 +
+                  ((typeof currentRequest.lastRightToe === "number"
+                    ? currentRequest.lastRightToe
+                    : 4) -
+                    4) /
+                  5) /
+                2
+                : currentRequest.foot === "both" && currentRequest.direction === "right"
+                  ? (((typeof currentRequest.lastLeftToe === "number"
+                    ? currentRequest.lastLeftToe
+                    : -1) +
+                    1) /
+                    5 +
+                    (10 -
+                      (typeof currentRequest.lastRightToe === "number"
+                        ? currentRequest.lastRightToe
+                        : 10)) /
+                    5) /
+                  2
+                  : 0;
 
   return (
     <>
@@ -689,9 +771,8 @@ function Game() {
             animationDuration: "0.3s",
             animationIterationCount: 1,
             animationTimingFunction: "ease",
-            transform: `rotate(${
-              currentRequest?.direction === "left" ? 180 : 0
-            }deg`,
+            transform: `rotate(${currentRequest?.direction === "left" ? 180 : 0
+              }deg`,
           }}
           src="img/arrow.svg"
           hidden={!currentRequest || currentRequest.type !== "stroke-request"}
@@ -714,13 +795,12 @@ function Game() {
             right: "7%",
             borderRadius: 4,
             background: `linear-gradient(#39F99D, #F9815C)`,
-            clipPath: `inset(${
-              100 -
+            clipPath: `inset(${100 -
               (currentRequest?.type === "toe-request"
                 ? (100 * currentRequest?.amountTickled) /
-                  currentRequest?.tickleAmountNeeded
+                currentRequest?.tickleAmountNeeded
                 : 100 * strokeProgress)
-            }% 0px 0px 0px)`,
+              }% 0px 0px 0px)`,
           }}
         />
         <img src="img/gauge.svg" style={{ position: "relative" }} width={50} />

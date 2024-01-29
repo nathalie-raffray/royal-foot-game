@@ -1,7 +1,8 @@
 // replace with url for music
 export const SFX = "sfx";
+export const TICKLE = "audio/tickle.mp3";
 const ARRAY_BUFFER_PROMISES = {};
-for (const src of [SFX]) {
+for (const src of [SFX, TICKLE]) {
     ARRAY_BUFFER_PROMISES[src] = fetch(src).then(data => data.arrayBuffer());
 }
 const MUSIC_BEATS_PER_MINUTE = 120;
