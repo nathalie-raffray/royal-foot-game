@@ -86,3 +86,73 @@ body {
 #overlay > * {
   position: absolute;
 }
+
+.box {
+  animation-duration: 0.7s;
+  animation-iteration-count: 1;
+}
+
+.bounce-1 {
+  animation-name: bounce-1;
+  animation-timing-function: ease;
+}
+
+@keyframes bounce-horizontal {
+  0% {
+    transform: translateX(0);
+  }
+  33% {
+    transform: translateX(100px);
+  }
+  66% {
+    transform: translateX(-100px);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+@keyframes bounce-vertical {
+  0% {
+    transform: translateY(0);
+  }
+  33% {
+    transform: translateY(-100px);
+  }
+  66% {
+    transform: translateY(100px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+@keyframes move-right {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(100px);
+  }
+}
+
+@keyframes move-left {
+  from {
+    transform: rotate(180deg) translateX(0) !important;
+  }
+  to {
+    transform: rotate(180deg) translateX(-100px) !important;
+  }
+}
+
+@keyframes hover-vertical {
+  0% {
+    transform: translate(-50%, -50%) translateY(0);
+  }
+  50% {
+    transform: translate(-50%, -50%) translateY(5px);
+  }
+  100% {
+    transform: translate(-50%, -50%) translateY(0);
+  }
+}
