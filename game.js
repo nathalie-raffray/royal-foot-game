@@ -364,7 +364,9 @@ let currentEntertainmentState = ENTERTAINMENT_STATES.NotStarted;
 function entertainGuestBeforeStartGame() {
   if (currentEntertainmentState === ENTERTAINMENT_STATES.NotStarted) {
     currentEntertainmentState = ENTERTAINMENT_STATES.EnterPortal;
-    SDK3DVerse.engineAPI.playAnimationSequence('3d00a38f-59cb-432c-b0aa-2fb9777f6cd5');
+    SDK3DVerse.engineAPI.playAnimationSequence(
+      "3d00a38f-59cb-432c-b0aa-2fb9777f6cd5"
+    );
     startEStateChrono = performance.now();
     return;
   }
@@ -386,11 +388,19 @@ function entertainGuestBeforeStartGame() {
 
   if (currentEntertainmentState === ENTERTAINMENT_STATES.StartScreen) {
     // foot wobble
-    const footWobble = 'd7366df8-5c90-4374-b42f-6133de3956e6';
-    SDK3DVerse.engineAPI.playAnimationSequence(footWobble, { playbackSpeed: 1 }, leftFoot);
-    SDK3DVerse.engineAPI.playAnimationSequence(footWobble, { playbackSpeed: 1 }, rightFoot);
+    const footWobble = "d7366df8-5c90-4374-b42f-6133de3956e6";
+    SDK3DVerse.engineAPI.playAnimationSequence(
+      footWobble,
+      { playbackSpeed: 1 },
+      leftFoot
+    );
+    SDK3DVerse.engineAPI.playAnimationSequence(
+      footWobble,
+      { playbackSpeed: 1 },
+      rightFoot
+    );
     // Show the start game button
-    document.getElementById("start-game").classList.remove('hidden');
+    document.getElementById("start-game").classList.remove("hidden");
   }
 }
 
@@ -420,7 +430,8 @@ function crawlToKingAndReachToTickle(tickler) {
       currentAnimationState = ANIMATION_STATES.TiptoeOutOfVoid;
       startStateChrono = performance.now();
 
-      const tiptoeAnimationSequenceUUID = "af11b239-44e1-426b-a219-080c56033a82";
+      const tiptoeAnimationSequenceUUID =
+        "af11b239-44e1-426b-a219-080c56033a82";
       SDK3DVerse.engineAPI.playAnimationSequence(tiptoeAnimationSequenceUUID);
 
       const animationController = tickler.getComponent("animation_controller");
@@ -488,20 +499,21 @@ function crawlToKingAndReachToTickle(tickler) {
   if (currentAnimationState === ANIMATION_STATES.LungeToFeet) {
     const elapsedTimeInS = (performance.now() - startStateChrono) / 1000;
     if (elapsedTimeInS >= 1) {
-
-      const travelToFeetUUID = '8b4b05a4-fd81-47ca-a982-6bd7870003ad';
+      const travelToFeetUUID = "8b4b05a4-fd81-47ca-a982-6bd7870003ad";
       SDK3DVerse.engineAPI.playAnimationSequence(travelToFeetUUID);
 
       const ticklerLinker = tickler.getParent();
       ticklerLinker.setVisibility(false);
-      setTimeout(() => { init = true; }, 2000);
+      setTimeout(() => {
+        init = true;
+      }, 2000);
     }
   }
 }
 
 //------------------------------------------------------------------------------
 async function HideLoadingScreen() {
-  document.getElementById("loading-screen").classList.add('hidden');
+  document.getElementById("loading-screen").classList.add("hidden");
 }
 
 //------------------------------------------------------------------------------
@@ -543,7 +555,7 @@ function Game() {
 
       HideLoadingScreen();
 
-      document.getElementById("start-game").addEventListener('click', (e) => {
+      document.getElementById("start-game").addEventListener("click", (e) => {
         onStartGame();
       });
 
@@ -610,10 +622,10 @@ function Game() {
       issueToeRequest();
 
       function onStartGame() {
-        const footWobble = 'd7366df8-5c90-4374-b42f-6133de3956e6';
+        const footWobble = "d7366df8-5c90-4374-b42f-6133de3956e6";
         SDK3DVerse.engineAPI.stopAnimationSequence(footWobble, leftFoot);
         SDK3DVerse.engineAPI.stopAnimationSequence(footWobble, rightFoot);
-        document.getElementById("start-game").classList.add('hidden');
+        document.getElementById("start-game").classList.add("hidden");
         console.log("Starting game");
         gameStarted = true;
       }
@@ -671,7 +683,7 @@ function Game() {
                 playFootAnimationSequences([
                   {
                     ...((foot === "left" && direction === "right") ||
-                      (foot === "right" && direction === "left")
+                    (foot === "right" && direction === "left")
                       ? animationSequences.toeWaveRight
                       : animationSequences.toeWaveLeft),
                     linker: foot === "left" ? leftFoot : rightFoot,
@@ -907,63 +919,69 @@ function Game() {
 
   const actionDescriptionIconPosition = toePositionsList.length
     ? [
-      Math.round((toePositionsList[4][0] + toePositionsList[9][0]) / 2),
-      Math.round((toePositionsList[4][1] + toePositionsList[9][1]) / 2),
-    ]
+        Math.round((toePositionsList[4][0] + toePositionsList[9][0]) / 2),
+        Math.round((toePositionsList[4][1] + toePositionsList[9][1]) / 2),
+      ]
     : [0, 0];
 
   const strokeProgress =
     currentRequest?.type !== "stroke-request"
       ? 0
       : currentRequest.foot === "left" && currentRequest.direction === "left"
-        ? (5 -
+      ? (5 -
           (typeof currentRequest.lastLeftToe === "number"
             ? currentRequest.lastLeftToe
             : 5)) /
         5
-        : currentRequest.foot === "left" && currentRequest.direction === "right"
-          ? ((typeof currentRequest.lastLeftToe === "number"
+      : currentRequest.foot === "left" && currentRequest.direction === "right"
+      ? ((typeof currentRequest.lastLeftToe === "number"
+          ? currentRequest.lastLeftToe
+          : -1) +
+          1) /
+        5
+      : currentRequest.foot === "right" && currentRequest.direction === "left"
+      ? ((typeof currentRequest.lastRightToe === "number"
+          ? currentRequest.lastRightToe
+          : 4) -
+          4) /
+        5
+      : currentRequest.foot === "right" && currentRequest.direction === "right"
+      ? (10 -
+          (typeof currentRequest.lastRightToe === "number"
+            ? currentRequest.lastRightToe
+            : 10)) /
+        5
+      : currentRequest.foot === "both" && currentRequest.direction === "left"
+      ? ((5 -
+          (typeof currentRequest.lastLeftToe === "number"
             ? currentRequest.lastLeftToe
-            : -1) +
-            1) /
-          5
-          : currentRequest.foot === "right" && currentRequest.direction === "left"
-            ? ((typeof currentRequest.lastRightToe === "number"
+            : 5)) /
+          5 +
+          ((typeof currentRequest.lastRightToe === "number"
+            ? currentRequest.lastRightToe
+            : 4) -
+            4) /
+            5) /
+        2
+      : currentRequest.foot === "both" && currentRequest.direction === "right"
+      ? (((typeof currentRequest.lastLeftToe === "number"
+          ? currentRequest.lastLeftToe
+          : -1) +
+          1) /
+          5 +
+          (10 -
+            (typeof currentRequest.lastRightToe === "number"
               ? currentRequest.lastRightToe
-              : 4) -
-              4) /
-            5
-            : currentRequest.foot === "right" && currentRequest.direction === "right"
-              ? (10 -
-                (typeof currentRequest.lastRightToe === "number"
-                  ? currentRequest.lastRightToe
-                  : 10)) /
-              5
-              : currentRequest.foot === "both" && currentRequest.direction === "left"
-                ? ((5 -
-                  (typeof currentRequest.lastLeftToe === "number"
-                    ? currentRequest.lastLeftToe
-                    : 5)) /
-                  5 +
-                  ((typeof currentRequest.lastRightToe === "number"
-                    ? currentRequest.lastRightToe
-                    : 4) -
-                    4) /
-                  5) /
-                2
-                : currentRequest.foot === "both" && currentRequest.direction === "right"
-                  ? (((typeof currentRequest.lastLeftToe === "number"
-                    ? currentRequest.lastLeftToe
-                    : -1) +
-                    1) /
-                    5 +
-                    (10 -
-                      (typeof currentRequest.lastRightToe === "number"
-                        ? currentRequest.lastRightToe
-                        : 10)) /
-                    5) /
-                  2
-                  : 0;
+              : 10)) /
+            5) /
+        2
+      : 0;
+
+  const barProgress =
+    currentRequest?.type === "toe-request"
+      ? (100 * currentRequest?.amountTickled) /
+        currentRequest?.tickleAmountNeeded
+      : 100 * strokeProgress;
 
   return (
     <>
@@ -1005,10 +1023,12 @@ function Game() {
           transform: "translate(-50%, -50%)",
           position: "absolute",
         }}
+        hidden={currentRequest?.endOfActionHandled}
       >
         <img
           src="img/mouse-horizontal.svg"
           hidden={
+            Boolean(barProgress) ||
             !currentRequest ||
             !(
               currentRequest.type === "toe-request" &&
@@ -1025,6 +1045,7 @@ function Game() {
         <img
           src="img/mouse-vertical.svg"
           hidden={
+            Boolean(barProgress) ||
             !currentRequest ||
             !(
               currentRequest.type === "toe-request" &&
@@ -1048,39 +1069,41 @@ function Game() {
             animationDuration: "0.3s",
             animationIterationCount: 1,
             animationTimingFunction: "ease",
-            transform: `rotate(${currentRequest?.direction === "left" ? 180 : 0
-              }deg`,
+            transform: `rotate(${
+              currentRequest?.direction === "left" ? 180 : 0
+            }deg`,
           }}
           src="img/arrow.svg"
-          hidden={!currentRequest || currentRequest.type !== "stroke-request"}
+          hidden={
+            Boolean(barProgress) ||
+            !currentRequest ||
+            currentRequest.type !== "stroke-request"
+          }
         />
-      </div>
-      <div
-        hidden={!currentRequest}
-        style={{
-          bottom: `1rem`,
-          left: `1rem`,
-          position: "absolute",
-        }}
-      >
         <div
+          hidden={!currentRequest || !barProgress}
           style={{
-            position: "absolute",
-            top: "9%",
-            bottom: "11%",
-            left: "22%",
-            right: "7%",
-            borderRadius: 4,
-            background: `linear-gradient(#39F99D, #F9815C)`,
-            clipPath: `inset(${100 -
-              (currentRequest?.type === "toe-request"
-                ? (100 * currentRequest?.amountTickled) /
-                currentRequest?.tickleAmountNeeded
-                : 100 * strokeProgress)
-              }% 0px 0px 0px)`,
+            position: "relative",
           }}
-        />
-        <img src="img/gauge.svg" style={{ position: "relative" }} width={50} />
+        >
+          <div
+            style={{
+              position: "absolute",
+              top: "9%",
+              bottom: "11%",
+              left: "22%",
+              right: "7%",
+              borderRadius: 4,
+              background: `linear-gradient(#39F99D, #F9815C)`,
+              clipPath: `inset(${100 - barProgress}% 0px 0px 0px)`,
+            }}
+          />
+          <img
+            src="img/gauge.svg"
+            style={{ position: "relative" }}
+            width={50}
+          />
+        </div>
       </div>
       <div
         hidden={!failText}

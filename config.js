@@ -53,7 +53,7 @@ export const animationSequences = {
   },
   footStomp: {
     id: "486d355c-c3f2-4f29-a713-f36f27c956b4",
-    playbackSpeed: 0.5,
+    playbackSpeed: 1.5,
   },
   toeWaveRight: {
     id: "a734f62a-e134-4aa7-9d61-315ebdefb66b",
